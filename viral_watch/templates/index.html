@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pemerhati Viral</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --surface: #ffffff; --text: #16181d; --muted: #646b78;
+    --border: #e3e6eb; --accent: #4f46e5;
+    --hot: #dc2626; --hot-bg: #fee2e2;
+    --viral: #ea580c; --viral-bg: #ffedd5;
+    --rise: #ca8a04; --rise-bg: #fef9c3;
+    --calm: #64748b; --calm-bg: #f1f5f9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115; --surface: #171a21; --text: #e8eaee; --muted: #9aa1ad;
+      --border: #272b34; --accent: #818cf8;
+      --hot: #f87171; --hot-bg: #3b1515;
+      --viral: #fb923c; --viral-bg: #3a2010;
+      --rise: #facc15; --rise-bg: #332a0a;
+      --calm: #94a3b8; --calm-bg: #1e232c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+  h1 { margin: 0; font-size: 22px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  button { font: inherit; cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); padding: 7px 14px; border-radius: 8px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .6; cursor: wait; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 20px 0; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .kpi .v { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .kpi .l { color: var(--muted); font-size: 13px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .tab { border-radius: 999px; padding: 5px 12px; font-size: 13px; }
+  .tab[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .tab .off { color: var(--muted); font-size: 11px; margin-left: 4px; }
+  select { font: inherit; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); margin-left: auto; }
+  .list { display: grid; gap: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; display: grid; grid-template-columns: 88px 1fr 140px; gap: 14px; align-items: center; }
+  .score { text-align: center; }
+  .score .n { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; }
+  .s-meletup { color: var(--hot); background: var(--hot-bg); }
+  .s-viral { color: var(--viral); background: var(--viral-bg); }
+  .s-naik { color: var(--rise); background: var(--rise-bg); }
+  .s-biasa { color: var(--calm); background: var(--calm-bg); }
+  .meta { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .text { margin: 2px 0 6px; overflow-wrap: anywhere; }
+  .text a { color: inherit; }
+  .demo { font-size: 10px; border: 1px dashed var(--muted); color: var(--muted); padding: 0 5px; border-radius: 4px; }
+  svg.spark { width: 140px; height: 40px; }
+  svg.spark path { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .empty { text-align: center; color: var(--muted); padding: 48px 16px; background: var(--surface);
+    border: 1px dashed var(--border); border-radius: 12px; }
+  .help { color: var(--muted); font-size: 13px; margin-top: 24px; }
+  @media (max-width: 640px) {
+    .card { grid-template-columns: 72px 1fr; }
+    .spark-cell { grid-column: 1 / -1; }
+    svg.spark { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Pemerhati Viral</h1>
+      <div class="sub" id="sub">Memuatkan…</div>
+    </div>
+    <button class="primary" id="collect">Kumpul data sekarang</button>
+  </header>
+
+  <section class="kpis">
+    <div class="kpi"><div class="v" id="k-total">–</div><div class="l">Pos dipantau</div></div>
+    <div class="kpi"><div class="v" id="k-hot">–</div><div class="l">Meletup</div></div>
+    <div class="kpi"><div class="v" id="k-viral">–</div><div class="l">Viral</div></div>
+    <div class="kpi"><div class="v" id="k-rise">–</div><div class="l">Sedang naik</div></div>
+  </section>
+
+  <div class="bar" id="tabs"></div>
+  <div class="list" id="list"></div>
+
+  <p class="help">
+    <b>Skor</b> = berapa kali ganda pos ini mengumpul interaksi lebih laju daripada pos biasa
+    (median) di platform yang sama. Interaksi = suka + 2×komen + 3×kongsi + 1% tontonan.
+    Garis kecil menunjukkan pertumbuhan interaksi antara setiap kutipan data.
+  </p>
+</div>
+
+<script>
+const NAMES = { "": "Semua", x: "X", tiktok: "TikTok", instagram: "Instagram", facebook: "Facebook" };
+const state = { platform: "", hours: 72, status: null };
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => Intl.NumberFormat("ms-MY", { notation: "compact" }).format(n);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+async function loadStatus() {
+  state.status = await (await fetch("/api/status")).json();
+  const s = state.status;
+  $("sub").textContent = `Kata kunci: ${s.keywords.join(", ")} · ambang viral ${s.multiplier}× median` + (s.demo ? " · mod DEMO aktif" : "");
+  renderTabs();
+}
+
+function renderTabs() {
+  const bar = $("tabs");
+  bar.innerHTML = "";
+  for (const key of Object.keys(NAMES)) {
+    const b = document.createElement("button");
+    b.className = "tab";
+    b.setAttribute("aria-pressed", state.platform === key);
+    const off = key && state.status && !state.status.platforms[key] ? '<span class="off">tiada kunci</span>' : "";
+    b.innerHTML = esc(NAMES[key]) + off;
+    b.onclick = () => { state.platform = key; renderTabs(); loadPosts(); };
+    bar.appendChild(b);
+  }
+  const sel = document.createElement("select");
+  sel.innerHTML = [6, 24, 72, 168].map((h) => `<option value="${h}" ${h === state.hours ? "selected" : ""}>${h < 48 ? h + " jam" : h / 24 + " hari"} terakhir</option>`).join("");
+  sel.onchange = () => { state.hours = +sel.value; loadPosts(); };
+  bar.appendChild(sel);
+}
+
+function spark(points) {
+  if (points.length < 2) return '<svg class="spark" viewBox="0 0 140 40"></svg>';
+  const ys = points.map((p) => p.engagement);
+  const min = Math.min(...ys), max = Math.max(...ys) || 1;
+  const d = ys.map((y, i) => {
+    const x = (i / (ys.length - 1)) * 136 + 2;
+    const yy = 38 - ((y - min) / (max - min || 1)) * 34;
+    return `${i ? "L" : "M"}${x.toFixed(1)},${yy.toFixed(1)}`;
+  }).join("");
+  return `<svg class="spark" viewBox="0 0 140 40" preserveAspectRatio="none" role="img" aria-label="Trend interaksi"><path d="${d}"/></svg>`;
+}
+
+async function loadPosts() {
+  const q = new URLSearchParams({ hours: state.hours });
+  if (state.platform) q.set("platform", state.platform);
+  const rows = await (await fetch("/api/posts?" + q)).json();
+  const count = (s) => rows.filter((r) => r.status === s).length;
+  $("k-total").textContent = rows.length;
+  $("k-hot").textContent = count("meletup");
+  $("k-viral").textContent = count("viral");
+  $("k-rise").textContent = count("naik");
+
+  const list = $("list");
+  if (!rows.length) {
+    list.innerHTML = `<div class="empty">Belum ada data. Tekan <b>Kumpul data sekarang</b>, atau isi kunci API dalam fail <code>.env</code>.</div>`;
+    return;
+  }
+  list.innerHTML = rows.map((r, i) => {
+    const isDemo = String(r.post_id).startsWith("demo-");
+    const text = esc((r.text || "").slice(0, 220));
+    const linked = r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${text}</a>` : text;
+    return `<article class="card">
+      <div class="score"><div class="n">${r.score >= 10 ? Math.round(r.score) : r.score.toFixed(1)}×</div><span class="badge s-${r.status}">${r.status}</span></div>
+      <div>
+        <div class="meta"><b>${esc(NAMES[r.platform] || r.platform)}</b><span>${esc(r.author)}</span>
+          <span>${r.age_hours} jam lalu</span>${isDemo ? '<span class="demo">DEMO</span>' : ""}</div>
+        <p class="text">${linked}</p>
+        <div class="meta">
+          <span>❤ ${fmt(r.likes)}</span><span>💬 ${fmt(r.comments)}</span><span>↻ ${fmt(r.shares)}</span>
+          ${r.views ? `<span>▶ ${fmt(r.views)}</span>` : ""}
+          <span>${fmt(r.velocity)}/jam</span>${r.momentum != null ? `<span>kini ${fmt(r.momentum)}/jam</span>` : ""}
+        </div>
+      </div>
+      <div class="spark-cell" id="sp-${i}">${spark([])}</div>
+    </article>`;
+  }).join("");
+  rows.slice(0, 30).forEach(async (r, i) => {
+    const h = await (await fetch("/api/history/" + encodeURIComponent(r.key))).json();
+    const el = $("sp-" + i);
+    if (el) el.innerHTML = spark(h);
+  });
+}
+
+$("collect").onclick = async (e) => {
+  e.target.disabled = true;
+  e.target.textContent = "Mengumpul…";
+  try { await fetch("/api/collect", { method: "POST" }); await loadPosts(); }
+  finally { e.target.disabled = false; e.target.textContent = "Kumpul data sekarang"; }
+};
+
+loadStatus().then(loadPosts);
+setInterval(loadPosts, 60000);
+</script>
+</body>
+</html>
