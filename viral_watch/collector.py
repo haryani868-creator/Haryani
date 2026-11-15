@@ -35,10 +35,12 @@ def collect_once(cfg: Config, store: Store) -> dict[str, int]:
 
 def print_top(cfg: Config, store: Store, n: int = 10) -> None:
     rows = store.ranked(multiplier=cfg.viral_multiplier, min_eng=cfg.min_engagement, limit=n)
-    print(f"\n{'Skor':>6}  {'Status':<8} {'Platform':<10} {'Interaksi':>10}  Teks")
+    print(f"\n{'Skor':>6}  {'Status':<8} {'Platform':<10} {'Interaksi':>10}  {'Kategori':<22} Teks")
     for r in rows:
-        text = (r["text"] or "").replace("\n", " ")[:60]
-        print(f"{r['score']:>6.1f}x {r['status']:<8} {r['platform']:<10} {int(r['engagement']):>10}  {text}")
+        text = (r["text"] or "").replace("\n", " ")[:50]
+        cats = ",".join(r["categories"])[:22]
+        flag = " ⚠" if r["risky"] else ""
+        print(f"{r['score']:>6.1f}x {r['status']:<8} {r['platform']:<10} {int(r['engagement']):>10}  {cats:<22} {text}{flag}")
 
 
 def main() -> None:

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pemerhati Viral</title>
+<title>Pemerhati Viral Kurus</title>
 <style>
   :root {
     --bg: #f6f7f9; --surface: #ffffff; --text: #16181d; --muted: #646b78;
@@ -58,6 +58,9 @@
   .meta { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
   .text { margin: 2px 0 6px; overflow-wrap: anywhere; }
   .text a { color: inherit; }
+  .cat { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--calm-bg); color: var(--text); }
+  .risk { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: var(--hot); background: var(--hot-bg); }
+  .tab.c[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
   .demo { font-size: 10px; border: 1px dashed var(--muted); color: var(--muted); padding: 0 5px; border-radius: 4px; }
   svg.spark { width: 140px; height: 40px; }
   svg.spark path { fill: none; stroke: var(--accent); stroke-width: 2; }
@@ -75,7 +78,7 @@
 <div class="wrap">
   <header>
     <div>
-      <h1>Pemerhati Viral</h1>
+      <h1>Pemerhati Viral · Kurus &amp; Cantik</h1>
       <div class="sub" id="sub">Memuatkan…</div>
     </div>
     <button class="primary" id="collect">Kumpul data sekarang</button>
@@ -89,18 +92,21 @@
   </section>
 
   <div class="bar" id="tabs"></div>
+  <div class="bar" id="cats"></div>
   <div class="list" id="list"></div>
 
   <p class="help">
     <b>Skor</b> = berapa kali ganda pos ini mengumpul interaksi lebih laju daripada pos biasa
     (median) di platform yang sama. Interaksi = suka + 2×komen + 3×kongsi + 1% tontonan.
     Garis kecil menunjukkan pertumbuhan interaksi antara setiap kutipan data.
+    <br><b>⚠ Tuntutan berisiko</b> = ayat seperti "turun 5kg seminggu" atau "tanpa diet". Iklan produk kurus
+    dengan tuntutan begini boleh melanggar Akta Ubat (Iklan dan Penjualan) 1956. Contohi gaya pos yang viral, bukan tuntutannya.
   </p>
 </div>
 
 <script>
 const NAMES = { "": "Semua", x: "X", tiktok: "TikTok", instagram: "Instagram", facebook: "Facebook" };
-const state = { platform: "", hours: 72, status: null };
+const state = { platform: "", category: "", hours: 72, status: null };
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => Intl.NumberFormat("ms-MY", { notation: "compact" }).format(n);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -128,6 +134,17 @@ function renderTabs() {
   sel.innerHTML = [6, 24, 72, 168].map((h) => `<option value="${h}" ${h === state.hours ? "selected" : ""}>${h < 48 ? h + " jam" : h / 24 + " hari"} terakhir</option>`).join("");
   sel.onchange = () => { state.hours = +sel.value; loadPosts(); };
   bar.appendChild(sel);
+
+  const cats = $("cats");
+  cats.innerHTML = "";
+  for (const c of ["", ...(state.status?.categories || [])]) {
+    const b = document.createElement("button");
+    b.className = "tab c";
+    b.setAttribute("aria-pressed", state.category === c);
+    b.textContent = c ? c[0].toUpperCase() + c.slice(1) : "Semua kategori";
+    b.onclick = () => { state.category = c; renderTabs(); loadPosts(); };
+    cats.appendChild(b);
+  }
 }
 
 function spark(points) {
@@ -145,6 +162,7 @@ function spark(points) {
 async function loadPosts() {
   const q = new URLSearchParams({ hours: state.hours });
   if (state.platform) q.set("platform", state.platform);
+  if (state.category) q.set("category", state.category);
   const rows = await (await fetch("/api/posts?" + q)).json();
   const count = (s) => rows.filter((r) => r.status === s).length;
   $("k-total").textContent = rows.length;
@@ -167,6 +185,7 @@ async function loadPosts() {
         <div class="meta"><b>${esc(NAMES[r.platform] || r.platform)}</b><span>${esc(r.author)}</span>
           <span>${r.age_hours} jam lalu</span>${isDemo ? '<span class="demo">DEMO</span>' : ""}</div>
         <p class="text">${linked}</p>
+        ${(r.categories.length || r.risky.length) ? `<div class="meta" style="margin-bottom:6px">${r.categories.map((c) => `<span class="cat">${esc(c)}</span>`).join("")}${r.risky.length ? `<span class="risk" title="Tuntutan seperti ini mungkin melanggar peraturan iklan KKM: ${esc(r.risky.join(", "))}">⚠ tuntutan berisiko</span>` : ""}</div>` : ""}
         <div class="meta">
           <span>❤ ${fmt(r.likes)}</span><span>💬 ${fmt(r.comments)}</span><span>↻ ${fmt(r.shares)}</span>
           ${r.views ? `<span>▶ ${fmt(r.views)}</span>` : ""}

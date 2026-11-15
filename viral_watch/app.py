@@ -15,6 +15,7 @@ from .collector import collect_once
 from .config import Config
 from .connectors import ALL, enabled
 from .db import Store
+from .niche import CATEGORIES
 
 
 def create_app(cfg: Config | None = None, store: Store | None = None) -> Flask:
@@ -38,6 +39,7 @@ def create_app(cfg: Config | None = None, store: Store | None = None) -> Flask:
             "multiplier": cfg.viral_multiplier,
             "min_engagement": cfg.min_engagement,
             "demo": cfg.demo,
+            "categories": list(CATEGORIES),
             "platforms": {c().name: c().configured() for c in ALL},
         })
 
@@ -46,7 +48,8 @@ def create_app(cfg: Config | None = None, store: Store | None = None) -> Flask:
         platform = request.args.get("platform") or None
         hours = float(request.args.get("hours", 72))
         rows = store.ranked(platform=platform, within_hours=hours,
-                            multiplier=cfg.viral_multiplier, min_eng=cfg.min_engagement)
+                            multiplier=cfg.viral_multiplier, min_eng=cfg.min_engagement,
+                            category=request.args.get("category") or None)
         return jsonify(rows)
 
     @app.get("/api/history/<path:key>")

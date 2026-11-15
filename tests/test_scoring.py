@@ -68,3 +68,46 @@ def test_demo_produces_explosive_posts():
     rows = s.ranked(now=later)
     assert len(rows) == 40
     assert any(r["status"] in ("viral", "meletup") for r in rows)
+
+
+from viral_watch import niche
+from viral_watch.connectors.x import XConnector
+
+
+def test_classify_niche_categories():
+    assert "produk" in niche.classify("Kopi kurus RM49, order dengan stokis")
+    assert "program" in niche.classify("Join #ProgramKurus 30 hari")
+    assert "testimoni" in niche.classify("Before-after: dah turun 6kg")
+    assert "diet & senaman" in niche.classify("Workout pagi + makan sihat")
+    assert niche.classify("Cuaca panas hari ini") == []
+
+
+def test_risky_claims_detected():
+    assert niche.risky_claims("Turun 5kg seminggu tanpa diet!")
+    assert niche.risky_claims("Kurus segera, dijamin!")
+    assert niche.risky_claims("Resepi salad ayam sihat") == []
+
+
+def test_category_filter_keeps_platform_baseline():
+    s = Store(":memory:")
+    posts = [post(f"n{i}", likes=100) for i in range(9)]
+    hot = post("hot", likes=5000)
+    hot.text = "Testimoni turun berat"
+    s.save(posts + [hot], now=NOW)
+    rows = s.ranked(now=NOW, category="testimoni")
+    assert [r["post_id"] for r in rows] == ["hot"]
+    assert rows[0]["status"] == "meletup"
+
+
+def test_x_queries_combine_keywords_under_limit():
+    groups = XConnector._queries([f"kata{i}" for i in range(100)])
+    assert len(groups) > 1
+    assert all(len("(" + " OR ".join(g) + ") -is:retweet") <= 500 for g in groups)
+    assert sum(len(g) for g in groups) == 100
+
+
+def test_momentum_ignores_snapshots_too_close_together():
+    s = Store(":memory:")
+    s.save([post("a", likes=100)], now=NOW)
+    s.save([post("a", likes=110)], now=NOW + timedelta(seconds=20))
+    assert s.ranked(now=NOW + timedelta(seconds=20))[0]["momentum"] is None

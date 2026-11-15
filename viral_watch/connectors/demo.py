@@ -12,11 +12,21 @@ from ..models import Post
 
 PLATFORMS = ["x", "tiktok", "instagram", "facebook"]
 TOPICS = [
-    "Resepi nasi lemak 5 minit", "Kucing comel tidur atas laptop", "Tips jimat duit gaji",
-    "Prank kawan sekelas", "Cabaran tarian baharu", "Review kedai mamak tersembunyi",
-    "Banjir kilat di jalan utama", "Lawak bahasa Melayu vs Inggeris", "Tutorial tudung mudah",
-    "Cerita seram asrama", "Harga barang naik lagi", "Kereta lama dibaik pulih",
-    "Rumah kampung estetik", "Pelajar dapat 11A", "Konsert artis tempatan",
+    "Testimoni turun 8kg selepas 2 bulan, before after",
+    "Program kurus 30 hari, join group coaching",
+    "Kopi kurus viral, harga RM49 order sekarang",
+    "Resepi sihat bawah 400 kalori untuk makan malam",
+    "Workout 15 minit di rumah untuk perut kempis",
+    "Turun 5kg seminggu tanpa diet!",
+    "Review jujur teh detox, berbaloi ke?",
+    "Meal prep seminggu bajet pelajar",
+    "Transformasi dari saiz XL ke M",
+    "Kenapa berat tak turun walaupun diet",
+    "Jalan kaki 10k langkah sehari, hasil sebulan",
+    "Shake protein ganti makan malam",
+    "Bengkung lepas bersalin, betul ke berkesan",
+    "Intermittent fasting untuk pemula",
+    "Body goals glowing dan langsing",
 ]
 
 
@@ -32,7 +42,7 @@ class DemoConnector(Connector):
         epoch = now.replace(minute=0, second=0, microsecond=0)
         epoch -= timedelta(hours=epoch.hour % 24)
         rng = random.Random(int(epoch.timestamp()))
-        kws = keywords or ["viral"]
+        kws = keywords or ["kurus"]
         posts = []
         for i in range(40):
             platform = PLATFORMS[i % len(PLATFORMS)]

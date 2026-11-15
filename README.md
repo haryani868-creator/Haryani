@@ -1,6 +1,22 @@
-# Pemerhati Viral
+# Pemerhati Viral · Kurus & Cantik
 
-Pantau kandungan yang sedang meletup di **X, TikTok, Instagram dan Facebook** — dengan skor viral dan papan pemuka web.
+Pantau kandungan niche **kurus & cantik** (program kurus, produk kurus, diet, testimoni) yang sedang meletup di **X, TikTok, Instagram dan Facebook**, dengan skor viral dan papan pemuka web.
+
+## Niche
+
+Kata kunci lalai: `kurus, kuruscantik, programkurus, produkkurus, turunberat, dietsihat, langsing, slimming, weightloss, kempiskanperut` (ubah melalui `VW_KEYWORDS` dalam `.env`).
+
+Setiap pos dikelaskan secara automatik (lihat `viral_watch/niche.py`) dan boleh ditapis di papan pemuka:
+
+| Kategori | Contoh isyarat |
+|---|---|
+| program | program kurus, challenge 30 hari, coaching, keto, fasting |
+| produk | kopi/teh kurus, detox, kapsul, shake, bengkung, stokis, harga RM |
+| testimoni | before after, dah turun, transformasi, dari saiz |
+| diet & senaman | kalori, makan sihat, workout, jalan kaki, meal prep |
+| kecantikan | glowing, langsing, perut kempis, bentuk badan |
+
+**⚠ Tuntutan berisiko**: pos yang mengandungi ayat seperti *"turun 5kg seminggu"*, *"tanpa diet"*, *"dijamin kurus"* atau *"kurus segera"* ditanda. Iklan produk kurus dengan tuntutan begini boleh melanggar Akta Ubat (Iklan dan Penjualan) 1956 dan garis panduan KKM. Contohi format dan gaya pos yang viral, bukan tuntutannya.
 
 ## Cara ia mengesan "viral"
 

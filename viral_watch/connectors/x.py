@@ -16,11 +16,25 @@ class XConnector(Connector):
     def configured(self) -> bool:
         return bool(self.token)
 
+    @staticmethod
+    def _queries(keywords, max_len=500):
+        """Gabung kata kunci dengan OR supaya jimat kuota (had query X: 512 aksara)."""
+        groups, cur = [], []
+        for kw in keywords:
+            trial = cur + [kw]
+            if cur and len("(" + " OR ".join(trial) + ") -is:retweet") > max_len:
+                groups.append(cur)
+                trial = [kw]
+            cur = trial
+        if cur:
+            groups.append(cur)
+        return groups
+
     def fetch(self, keywords):
         posts = []
-        for kw in keywords:
+        for group in self._queries(keywords):
             data = self._get(API, headers={"Authorization": f"Bearer {self.token}"}, params={
-                "query": f"{kw} -is:retweet",
+                "query": "(" + " OR ".join(group) + ") -is:retweet",
                 "max_results": 100,
                 "sort_order": "relevancy",
                 "tweet.fields": "created_at,public_metrics,author_id",
@@ -31,6 +45,8 @@ class XConnector(Connector):
             for t in data.get("data", []):
                 m = t.get("public_metrics", {})
                 user = users.get(t.get("author_id"), t.get("author_id", ""))
+                low = t.get("text", "").lower()
+                kw = next((k for k in group if k.lower() in low), group[0])
                 posts.append(Post(
                     platform=self.name, post_id=t["id"], author=f"@{user}",
                     text=t.get("text", ""),

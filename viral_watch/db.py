@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import sqlite3
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from .models import Post
-from . import scoring
+from . import niche, scoring
+
+MIN_MOMENTUM_GAP = timedelta(minutes=10)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS posts (
@@ -76,12 +78,13 @@ class Store:
 
     def ranked(self, platform: str | None = None, within_hours: float = 72,
                multiplier: float = 5.0, min_eng: int = 500,
-               now: datetime | None = None, limit: int = 100) -> list[dict]:
+               now: datetime | None = None, limit: int = 100,
+               category: str | None = None) -> list[dict]:
         """Kira skor viral untuk semua pos terkini dan susun dari tertinggi."""
         with self.lock:
-            return self._ranked(platform, within_hours, multiplier, min_eng, now, limit)
+            return self._ranked(platform, within_hours, multiplier, min_eng, now, limit, category)
 
-    def _ranked(self, platform, within_hours, multiplier, min_eng, now, limit):
+    def _ranked(self, platform, within_hours, multiplier, min_eng, now, limit, category=None):
         now = now or datetime.now(timezone.utc)
         q = "SELECT * FROM posts"
         args: list = []
@@ -96,15 +99,19 @@ class Store:
             age = scoring.age_hours(created, now)
             if age > within_hours:
                 continue
-            snaps = self.conn.execute(
-                "SELECT * FROM snapshots WHERE key=? ORDER BY ts DESC LIMIT 2",
+            last = self.conn.execute(
+                "SELECT * FROM snapshots WHERE key=? ORDER BY ts DESC LIMIT 1",
                 (p["key"],),
-            ).fetchall()
-            if not snaps:
+            ).fetchone()
+            if not last:
                 continue
-            last = snaps[0]
-            prev = snaps[1] if len(snaps) > 1 else None
             last_ts = _dt(last["ts"])
+            # Momentum perlu jarak masa yang munasabah; kutipan beberapa saat
+            # berselang menghasilkan kadar 'sejam' yang sangat bising.
+            prev = self.conn.execute(
+                "SELECT * FROM snapshots WHERE key=? AND ts<=? ORDER BY ts DESC LIMIT 1",
+                (p["key"], _iso(last_ts - MIN_MOMENTUM_GAP)),
+            ).fetchone()
             vel = scoring.velocity(last["engagement"], scoring.age_hours(created, last_ts))
             mom = scoring.momentum(
                 prev["engagement"] if prev else None,
@@ -118,6 +125,8 @@ class Store:
                 "engagement": last["engagement"],
                 "age_hours": round(age, 1),
                 "velocity": vel, "momentum": mom,
+                "categories": niche.classify(p["text"] or ""),
+                "risky": niche.risky_claims(p["text"] or ""),
             })
 
         # Garis dasar dikira per platform supaya TikTok tidak dibanding dengan Facebook
@@ -133,5 +142,8 @@ class Store:
             it["velocity"] = round(it["velocity"], 1)
             it["momentum"] = None if it["momentum"] is None else round(it["momentum"], 1)
 
+        # Tapis kategori SELEPAS garis dasar dikira, supaya skor tidak berubah ikut penapis
+        if category:
+            items = [it for it in items if category in it["categories"]]
         items.sort(key=lambda x: x["score"], reverse=True)
         return items[:limit]

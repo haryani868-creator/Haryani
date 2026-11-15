@@ -2,6 +2,8 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .niche import DEFAULT_KEYWORDS
+
 
 def _load_dotenv(path: str = ".env") -> None:
     """Muat .env ringkas tanpa kebergantungan tambahan."""
@@ -27,7 +29,7 @@ class Config:
     @classmethod
     def from_env(cls) -> "Config":
         _load_dotenv()
-        kw = os.getenv("VW_KEYWORDS", "malaysia,viral")
+        kw = os.getenv("VW_KEYWORDS") or ",".join(DEFAULT_KEYWORDS)
         return cls(
             keywords=[k.strip() for k in kw.split(",") if k.strip()],
             viral_multiplier=float(os.getenv("VW_VIRAL_MULTIPLIER", "5")),
